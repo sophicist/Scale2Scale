@@ -1,0 +1,2 @@
+"0","df %>% ggplot(aes(x = variable,y = value))+geom_jitter(size =4,color = ""#444541"",width=0.25,alpha=0.6)+coord_flip()+"
+"0","  labs(title = ""Spending patterns in all countries in USD dollars"")+theme_excel()+ theme(panel.background = element_blank())"

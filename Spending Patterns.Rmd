@@ -1,0 +1,39 @@
+---
+title: "Plot"
+author: "John Kamau"
+date: "2/25/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(readxl)
+df <- read_excel("YAR_boxplots_Expenditures_Final_version.xlsx")
+unique(df$variable)
+remove <- c("-\tOther significant expenses (>10% of monthly income)","House/rent","cigarettes","Water charges","Electricity charges/charging phones/kerosene/energy/firewood","Toiletries","Alcoholic beverages")
+
+df <- df %>% filter(!variable %in% remove)
+```
+
+```{r,fig.width =9}
+library(ggthemes)
+df %>% head()
+df %>% ggplot(aes(x = variable,y = value))+geom_jitter(size =4,color = "#444541",width=0.25,alpha=0.6)+coord_flip()+
+  labs(title = "Spending patterns in all countries in USD dollars")+theme_excel()+ theme(panel.background = element_blank())
+```
+```{r,fig.height =7,fig.width =9}
+colors = c("#f5ef42","#428df5","#42e3f5","#4b4f4f","#c7c9c9","#cbe39d")
+df %>%filter(Country== "Nigeria",
+             Age != "NA") %>%drop_na() %>%  
+  ggplot(aes(x = variable,y = value))+geom_jitter(width=0.25,size = 3,alpha = 0.5,aes(color = Age))+coord_flip()+
+  labs(title = "Total expenses for 3 months by age in USD dollars")+theme_excel()+ 
+  theme(panel.background = element_blank())
+  scale_fill_manual(values = colors)
+```
+

@@ -1,0 +1,180 @@
+---
+title: "Baseline Analysis"
+author: "Kamau Kamau"
+date: "18/02/2021"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F,warning = F,message = F,fig.width =8,fig.height = 7)
+```
+
+```{r}
+# read the files from the comp
+#dir()
+library(readxl)
+library(knitr)
+base <- read_excel("BaselineRISE_2019_30_10_15_19.xlsx")
+end  <- read_excel("EndlineRISE_2020_14_11_08_57.xlsx")
+```
+
+Endline and Baseline Analysis
+
+
+# Types of Business
+
+What type of income generation or business is this?
+
+```{r}
+library(reshape2)
+library(tidyverse)
+library(janitor)
+library(scales)
+source("theme.R")
+x <- base[,grep("Gender|A_Q_17",names(base))]
+names(x)<-c("Gender","Retail sales (meaning selling directly to consumers)", "Trade (meaning selling to businesses or organisations)", "Manufacturing (making furniture, baskets, garments production, food processing, ...)", "Restaurant, bar, café, bakery (selling food & drinks to people)", "Service business (hair dresser, (motor-)bike repair, tailoring, repairing items...)", "Agent work (selling airtime, mobile money, ...)", "Renting (rooms, vehicle, equipment...)", "Other (specify)")
+x[x<0]<-NA
+dt <- x %>% melt(id.vars = "Gender") %>% drop_na() %>% 
+  mutate(value = ifelse(value==1,"Yes","No")) %>% group_by(Gender,variable,value) %>% tally() %>%  dcast(variable+value~Gender,value.var ="n") %>% adorn_percentages()  %>% filter(value=="Yes")%>% select(!value) %>% melt()
+grapher<-  function(dt,title,question){
+  names(dt) <-  c(question,"variable","value")
+y <- dt %>% adorn_pct_formatting()
+dt$label <- y$value
+fig <- dt %>% ggplot(aes(x = .data[[question]],fill = .data[["variable"]],y = .data[["value"]], label = .data[["label"]]))+geom_bar(stat = "identity",position ="fill")+coord_flip()+theme1+
+  scale_x_discrete(labels = wrap_format(40))+labs(title = title)+geom_text(position = position_fill(vjust = 0.5))+theme1+scale_fill_manual(values = colors)
+return(fig)
+}
+
+grapher(dt,"Type of business \n Baseline","Business")
+  
+```
+
+RF-EL-170 We would like to hear which of your income sources are still active. We will read out each business to record the current situation.
+
+```{r}
+x <- end[,grep("Gender|Q_17_[0-9]$",names(end))]
+names(x)<-  c("Gender","Retail sales (meaning selling directly to consumers)", "Trade (meaning selling to businesses or organisations)", "Manufacturing (making furniture, baskets, garments production, food processing, ...)", "Restaurant, bar, café, bakery (selling food & drinks to people)", "Service business (hair dresser, (motor-) bike repair, tailoring, repairing items...)", "Agent work (selling airtime, mobile money, ...)", "Renting (rooms, vehicle, equipment...)", "Other (specify)")
+dt <- x %>% melt(id.vars = "Gender") %>% filter(value==2) %>% group_by(Gender,variable) %>% tally() %>% dcast(variable~Gender,value.var = "n") %>% adorn_percentages()  %>% melt()
+grapher(dt,"income sources are still active \n Endline","Income")
+```
+
+# Employment
+
+Do you have any form of employment? (think of all types of work that is (sometimes) paid, also informal work, including a few hours of babysitting, working for friends...)
+
+```{r}
+x <-  base[,grep("Gender|Q_19_[0-9]",names(base))]
+names(x)<- c("Gender","Working for others' farms or household", "Casual labour", "Working in a small business", "Working in a larger/formal business", "Working for the authorities of the camp", "Working for an NGO", "Commission work", "Other (specify)", "Community based organizations(CBOs)", "None")
+dt <- x %>% melt(id.vars = "Gender") %>% mutate(value = ifelse(value==1,"Yes","No")) %>% 
+  group_by(Gender,variable,value) %>% tally() %>% dcast(variable+value~Gender,value.var = "n") %>% adorn_percentages()%>% filter(value=="Yes") %>% select(!value) %>% melt()
+grapher(dt,"Type of employment \n Baseline","employment")
+
+```
+
+RF-EL-210 We would like to hear which of your employments are currently active. We will read out each type of employment and ask you what the current situation is.
+
+```{r}
+x <- end[,grep("Gender|Q_21_[0-9]$",names(end))]
+names(x)<-c("Gender","Working for others' farms or household", "Casual labour", "Working in a small business", "Working in a larger/formal business", "Working for the authorities of the camp", "Working for an NGO", "Commission work", "Other (specify)", "Community based organizations(CBOs)")
+
+dt <- x %>%  melt(id.vars = "Gender") %>% filter(value==2) %>% 
+  group_by(Gender,variable) %>% tally() %>% dcast(variable~Gender,value.var = "n") %>% adorn_percentages()  %>% melt()
+grapher(dt,"Employment are still active \n Endline","employment")
+```
+
+# Agriculture
+
+Do you have any form of agriculture?
+
+```{r}
+x <-  base[,grep("Gender|Q_20",names(base))]
+names(x)<-c("Gender","Crop-agriculture for own consumption", "Crop-agriculture for sales", "Horticulture for own consumption", "Horticulture for sales", "Livestock for own consumption", "Livestock for sales", "Other (specify)", "None")
+dt<- x %>% melt(id.vars = "Gender")%>% mutate(value = ifelse(value==1,"Yes","No")) %>% 
+  group_by(Gender,variable,value) %>% tally() %>% dcast(variable+value~Gender,value.var = "n") %>% adorn_percentages() %>% 
+  filter(value=="Yes") %>% select(!value) %>% melt()
+grapher(dt,"Do you have any form of agriculture? \n Baseline","Agriculture")
+```
+
+RF-EL-250 We would like to hear which of your agricultural products are currently active. We will read out each type of agriculture and ask you what the current situation is.
+
+```{r}
+x <- end[,grep("Gender|Q_25_[0-9]$",names(end))]
+names(x) <- c("Gender","Crop-agriculture for own consumption", "Crop-agriculture for sales", "Horticulture for own consumption", "Horticulture for sales", "Livestock for own consumption", "Livestock for sales", "Other (specify)")
+dt <- x %>% melt(id.vars = "Gender")%>% filter(value==2) %>% 
+  group_by(Gender,variable) %>% tally() %>% dcast(variable~Gender,value.var = "n") %>% adorn_percentages()  %>% melt()
+grapher(dt,"Agricultural product that are still active \n Endline","agriculture")
+```
+
+# Savings
+
+Which forms of savings have you ever practiced?
+
+```{r}
+x <-  base[,grep("Gender|Q_24",names(base))]
+names(x)<-c("Gender","Keeping money at home", "Keeping on the body/in clothes/in wallet", "Savings collector (shop, neighbour, door to door collector)", "Lend to others", "Buy something to use or sell later", "Savings group", "SACCO/Cooperative", "Microfinance (MDI)", "Bank", "Mobile money", "Buy stock (business reserves)", "Buy animals/feed animals to sell later", "Other savings form (specify)", "None")
+
+dt <- x %>% melt(id.vars = "Gender")%>% mutate(value = ifelse(value==1,"Yes","No")) %>% 
+  group_by(Gender,variable,value) %>% tally() %>% dcast(variable+value~Gender,value.var = "n") %>% adorn_percentages() %>% 
+   filter(value=="Yes")%>% select(!value) %>% melt()
+grapher(dt,"Which forms of savings have you ever practiced? \n Baseline","Savings")
+```
+
+RF-EL-330 Which of these savings forms do you currently use?
+
+```{r}
+x <- end[,grep("Gender|Q_33",names(end))]
+names(x)<-  c("Gender","Keeping money at home", "Keeping on the body/in clothes/in wallet", "Savings collector (shop, neighbour, door to door collector)", "Lend to others", "Buy something to use or sell later", "Savings group", "SACCO/Cooperative", "Microfinance (MDI)", "Bank", "Mobile money", "Buy stock (business reserves)", "Buy animals/feed animals to sell later", "Other savings form (specify)", "None")
+dt <- x %>% melt(id.vars = "Gender") %>% filter(value==1) %>% group_by(Gender,variable) %>% tally()%>% dcast(variable~Gender,value.var = "n") %>% adorn_percentages()  %>% melt()
+grapher(dt,"Savings that are still active \n Endline","Savings")
+```
+
+# Methodology
+
+RF-BL-260 What is the methodology of Savings group {0} ?
+
+```{r}
+x <-  base[,grep("Gender|Q_28",names(base))]
+x.melt <- x %>% melt(id.vars = "Gender") 
+x.melt$value <- factor(x.melt$value,levels = 1:6,labels = c("ROSCA", "Distributive ASCA", "Non-distributive ASCA", "Burial society or other life-event savings group", "Other methodology (specify)","Does not want to answer")
+)
+dt <- x.melt %>% drop_na() %>% group_by(Gender,value) %>% tally() %>% dcast(value~Gender,value.var = "n") %>% adorn_percentages() %>%  melt()
+grapher(dt,"RF-BL-260 What is the methodology of Savings group {0} ?\n Baseline","Group methodology")
+```
+
+RF-EL-540 Which savings group forms are you currently using?
+
+```{r}
+x <- end[,grep("Gender|Q_54_[0-9]$",names(end))]
+names(x) <-  c("Gender","ROSCA", "Distributive ASCA", "Non-distributive ASCA", "Burial society or other life-event savings group", "Other methodology (specify)")
+dt <- x %>% melt(id.vars = "Gender" ) %>% filter(value==2) %>% group_by(Gender,variable) %>% tally()%>% dcast(variable~Gender,value.var = "n") %>% adorn_percentages()  %>% melt()
+grapher(dt,"Which savings group forms are you currently using? \n Endline","Savings")
+```
+
+# Loan
+
+RF-BL-270 What type of loans have you ever used in your life?
+
+```{r}
+x <-  base[,grep("Gender|Q_29",names(base))]
+names(x) <- c("Gender","Friend", "Family", "Neighbour", "Employer", "Buy-now-pay-later/PAYGo", "Money lender", "Savings group", "SACCO/Cooperative", "Microfinance", "Bank", "Local store", "Other (specify)", "None")
+dt <- x %>% melt(id.vars = "Gender") %>% mutate(value = ifelse(value==1,"Yes","No")) %>% 
+  group_by(Gender,variable,value) %>% tally() %>% dcast(variable+value~Gender,value.var = "n") %>% adorn_percentages() %>% filter(value=="Yes") %>%select(!value) %>%   melt()
+grapher(dt,"What type of loans have you ever used in your life? \n Baseline","Loans")
+```
+
+RF-EL-610 What type of loan are you using at the moment?
+
+```{r}
+x <- end[,grep("Gender|Q_61_[0-9]$",names(end))]
+names(x)<-c("Gender","Friend", "Family", "Neighbour", "Employer", "Buy-now-pay-later/PAYGo", "Money lender", "Savings group", "SACCO/Cooperative", "Microfinance", "Bank", "Local store", "Other (specify)", "None")
+
+dt <- x %>% melt(id.vars = "Gender") %>% filter(value == 1) %>% group_by(Gender,variable) %>% tally()%>% dcast(variable~Gender,value.var = "n") %>% adorn_percentages()  %>% melt()
+grapher(dt,"Which savings group forms are you currently using? \n Endline","Savings")
+```
+
+
+
+

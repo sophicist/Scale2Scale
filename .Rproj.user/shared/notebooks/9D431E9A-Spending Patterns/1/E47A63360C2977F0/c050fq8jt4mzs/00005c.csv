@@ -1,0 +1,6 @@
+"0","colors = c(""#f5ef42"",""#428df5"",""#42e3f5"",""#4b4f4f"",""#c7c9c9"",""#cbe39d"")"
+"0","df %>%filter(Country== ""Nigeria"","
+"0","             Age != ""NA"") %>%drop_na() %>%  "
+"0","  ggplot(aes(x = variable,y = value))+geom_jitter(width=0.25,size = 3,alpha = 0.5,aes(color = Age))+coord_flip()+"
+"0","  labs(title = ""Total expenses for 3 months by age in USD dollars"")+theme_excel()+ "
+"0","  theme(panel.background = element_blank())"
